@@ -6,11 +6,12 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 from django.utils import simplejson
 from django.core import serializers
+from django.conf import settings
 
 from django.contrib.admin.views.decorators import staff_member_required
 
 from memopol2.main.models import Position, Database
-from memopol2 import settings
+
 
 def index_names(request):
     return render_to_response('index.html', {'meps_list': Database().get_meps_by_names()}, context_instance=RequestContext(request))

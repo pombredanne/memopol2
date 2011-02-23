@@ -2,7 +2,7 @@ from django.db import models
 from django.http import Http404
 from couchdbkit import Server
 from couchdbkit.exceptions import ResourceNotFound
-from memopol2 import settings
+from django.conf import settings
 
 
 class Mep(dict):
@@ -30,6 +30,7 @@ class Mep(dict):
     def get(key):
         couch = Server(settings.COUCHDB)
         return Mep(couch["meps"].get(key))
+
 
 class Position(models.Model):
     mep_id = models.CharField(max_length=128)
