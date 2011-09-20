@@ -41,19 +41,13 @@ opener = urllib2.build_opener()
 opener.addheaders = [('User-agent', 'memopol2/0.8')]
 urllib2.install_opener(opener)
 
-def fetch(url):
-    # url to etree
-    try:
-        f=urllib2.urlopen(url)
-    except urllib2.HTTPError:
+def fetch(url, retries=3):
+    for i in range(retries):
         try:
-            f=urllib2.urlopen(url)
+            return parse(urllib2.urlopen(url))
         except urllib2.HTTPError:
-            try:
-                f=urllib2.urlopen(url)
-            except urllib2.HTTPError:
-                return ''
-    return parse(f)
+            pass
+    return ''
 
 def dateJSONhandler(obj):
     if hasattr(obj, 'isoformat'):
