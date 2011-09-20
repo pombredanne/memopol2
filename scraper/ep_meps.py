@@ -137,6 +137,14 @@ def parseMember(userid):
     # process info of Constituencies
     group=root.xpath("//span[@class='titlemep']/text()")[0].strip()
     country=''.join([' '.join(x.split()).strip() for x in root.xpath("//table[@class='titlemep']//td//text()") if ' '.join(x.split()).strip()])
+    
+    # There is multiple parties named "Partido Popular" cf. https://projets.lqdn.fr/issues/273
+    if group == "Partido Popular":
+        if country == 'Portugal':
+            group += ' (PT)'
+        elif country == 'Spain':
+            group += ' (ES)'
+    
     data['Constituencies']={'country': country, 'party': group}
     # process other historical data
     for c in root.xpath("//td[@class='mepcountry']"):
