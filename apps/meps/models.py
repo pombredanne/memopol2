@@ -137,6 +137,38 @@ class Organization(models.Model):
 
 
 
+class MEPHistoryManager(models.Manager):
+    
+    date = None
+    def __init__(self, *args, **kwargs):
+        self.relations = kwargs.pop('relations', [])
+        super(MEPHistoryManager, self).__init__(*args, **kwargs)
+    
+    def at(self, date):
+        self.date = date
+        return self
+    
+    def current(self):
+        self.date = date.today()
+    
+    def get_query_set(self):
+        query = super(MEPHistoryManager, self).get_query_set()
+        if self.date is None:
+            return query
+        
+        for relation, foreign_keys in self.relations.items():
+            rel_name, rel_table = self._get_names_for(relation)
+            query = query.filter(**{'%s__end__gt' % rel_name: at, '%s__begin__lt' % rel_name: at})
+            
+            for fk in foreign_keys:
+                query = query.extra(select={'current_%s' % fk: '%s.%s' % (rel_table, fk)})
+        return query
+    
+    def _get_names_for(self, relation_name):
+        relation = getattr(self.model, relation_name)
+        return relation.through._meta.module_name, relation.through._meta.db_table
+
+
 @search.searchable
 class MEP(Representative):
     active = models.BooleanField()
@@ -167,7 +199,12 @@ class MEP(Representative):
     organizations = models.ManyToManyField(Organization, through='OrganizationMEP')
     position = models.IntegerField(default=None, null=True)
     total_score = models.FloatField(default=None, null=True)
-
+    
+    objects = MEPHistoryManager(relations={
+        'countries': ['country_id', 'party_id'],
+        'groups': ['group_id']
+    })
+    
     @reify
     def get_ep_webpage(self):
         if self.active and self.ep_webpage:
