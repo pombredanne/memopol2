@@ -150,23 +150,22 @@ class MEPHistoryManager(models.Manager):
     
     def current(self):
         self.date = date.today()
+        return self
     
     def get_query_set(self):
         query = super(MEPHistoryManager, self).get_query_set()
         if self.date is None:
             return query
         
-        for relation, foreign_keys in self.relations.items():
-            rel_name, rel_table = self._get_names_for(relation)
-            query = query.filter(**{'%s__end__gt' % rel_name: at, '%s__begin__lt' % rel_name: at})
-            
+        for m2m_name, foreign_keys in self.relations.items():
+            m2m = getattr(self.model, m2m_name)
+            relation_name = m2m.through._meta.module_name
+            relation_table = m2m.through._meta.db_table
+            query = query.filter(**{'%s__end__gt' % relation_name: self.date, '%s__begin__lt' % relation_name: self.date})
             for fk in foreign_keys:
-                query = query.extra(select={'current_%s' % fk: '%s.%s' % (rel_table, fk)})
+                query = query.extra(select={'current_%s' % fk: '%s.%s' % (relation_table, fk)})
+
         return query
-    
-    def _get_names_for(self, relation_name):
-        relation = getattr(self.model, relation_name)
-        return relation.through._meta.module_name, relation.through._meta.db_table
 
 
 @search.searchable
